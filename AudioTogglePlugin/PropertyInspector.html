@@ -1,0 +1,121 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="utf-8" />
+    <title>Audio Toggle Settings</title>
+    <link rel="stylesheet" href="sdpi.css">
+</head>
+<body>
+    <div class="sdpi-wrapper">
+        
+        <div class="sdpi-item">
+            <div class="sdpi-item-label">Device 1</div>
+            <select class="sdpi-item-value select" id="deviceA" onchange="saveSettings()">
+                <option value="">Loading...</option>
+            </select>
+        </div>
+
+        <div class="sdpi-item">
+            <div class="sdpi-item-label">Device 2</div>
+            <select class="sdpi-item-value select" id="deviceB" onchange="saveSettings()">
+                <option value="">Loading...</option>
+            </select>
+        </div>
+        
+        <div class="sdpi-item">
+            <details class="message">
+                <summary>Status</summary>
+                <p id="statusMsg">Waiting for plugin...</p>
+            </details>
+        </div>
+
+    </div>
+
+    <script>
+        var websocket = null;
+        var uuid = null;
+        var currentSettings = {};
+
+        function connectElgatoStreamDeckSocket(inPort, inPluginUUID, inRegisterEvent, inInfo, inActionInfo) {
+            uuid = inPluginUUID;
+            var actionInfo = JSON.parse(inActionInfo);
+            currentSettings = actionInfo.payload.settings || {};
+            
+            websocket = new WebSocket("ws://127.0.0.1:" + inPort);
+
+            websocket.onopen = function () {
+                var json = { event: inRegisterEvent, uuid: inPluginUUID };
+                websocket.send(JSON.stringify(json));
+
+                document.getElementById("statusMsg").innerHTML = "Connected. Requesting list...";
+                
+                // Trigger C# to send list
+                setTimeout(saveSettings, 500);
+            };
+
+            websocket.onmessage = function (evt) {
+                var jsonObj = JSON.parse(evt.data);
+                var eventType = jsonObj.event.toLowerCase(); // Fix capitalization issues
+
+                // Listen for "sendtopropertyinspector" (Case insensitive check)
+                if (eventType === "sendtopropertyinspector") {
+                    var payload = jsonObj.payload;
+                    
+                    if (payload.event_name === "GetDeviceList") {
+                        document.getElementById("statusMsg").innerHTML = "List received!";
+                        updateDropdowns(payload.items);
+                    }
+                }
+            };
+        }
+
+        function updateDropdowns(devices) {
+            var selA = document.getElementById('deviceA');
+            var selB = document.getElementById('deviceB');
+            
+            // Keep current selection
+            var valA = selA.value || currentSettings.deviceA;
+            var valB = selB.value || currentSettings.deviceB;
+
+            selA.innerHTML = "";
+            selB.innerHTML = "";
+
+            if (!devices || devices.length === 0) {
+                 var opt = document.createElement("option");
+                 opt.text = "No Devices Found";
+                 selA.appendChild(opt);
+                 selB.appendChild(opt.cloneNode(true));
+                 return;
+            }
+
+            devices.forEach(function(dev) {
+                var optA = document.createElement("option");
+                // Handle both Case Styles (Id vs id) just in case
+                optA.value = dev.Id || dev.id;
+                optA.text = dev.Name || dev.name;
+                selA.appendChild(optA);
+
+                var optB = document.createElement("option");
+                optB.value = dev.Id || dev.id;
+                optB.text = dev.Name || dev.name;
+                selB.appendChild(optB);
+            });
+
+            if (valA) selA.value = valA;
+            if (valB) selB.value = valB;
+        }
+
+        function saveSettings() {
+            currentSettings.deviceA = document.getElementById('deviceA').value;
+            currentSettings.deviceB = document.getElementById('deviceB').value;
+
+            var json = {
+                "event": "setSettings",
+                "context": uuid,
+                "payload": currentSettings
+            };
+            websocket.send(JSON.stringify(json));
+        }
+    </script>
+</body>
+</html>

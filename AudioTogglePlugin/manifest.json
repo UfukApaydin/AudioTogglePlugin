@@ -1,0 +1,43 @@
+{
+  "SDKVersion": 2,
+  "Actions": [
+    {
+      "Icon": "Images/pluginIcon",
+      "Name": "Audio Toggle",
+      "PropertyInspectorPath": "PropertyInspector.html",
+    "States": [
+  {
+    "Image": "Images/Speakers",
+    "Name": "Device A Active",
+    "Title": "Show Device A"
+  },
+  {
+    "Image": "Images/Headphones",
+    "Name": "Device B Active",
+    "Title": "Show Device B"
+  }
+],
+      "SupportedInMultiActions": true,
+      "Tooltip": "Toggles between two audio devices",
+      "UUID": "com.yourname.audiotoggle.action"
+    }
+  ],
+  "Category": "My Audio Tools",
+  "CategoryIcon": "Images/categoryIcon",
+  "Name": "Audio Toggle Plugin",
+  "Description": "Toggle Audio Output",
+  "Author": "Your Name",
+  "Icon": "Images/pluginIcon",
+  "Version": "1.0",
+  "URL": "https://www.google.com",
+  "Software": {
+    "MinimumVersion": "6.0"
+  },
+  "OS": [
+    {
+      "Platform": "windows",
+      "MinimumVersion": "10"
+    }
+  ],
+  "CodePathWin": "AudioTogglePlugin.exe"
+}
